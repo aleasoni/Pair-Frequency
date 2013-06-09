@@ -91,40 +91,38 @@ def get_pair_frequencies(seqs, k, w):
     return pair_freq,total
 
 
-def get_pair_t_statistic(pair_freqs,freqs,k,w,total):
+def get_pair_scores(pair_freqs,freqs,k,w,total):
 
-    pair_t_statistic = {}
+    pair_scores = {}
 
     for (p,v) in pair_freqs.items():
         (a,b) = p
         f_a = freqs[len(a)-1][a]
         f_b = freqs[len(b)-1][b]
 
-        #calculate mu of null
-        mu = 0.0
+        exp = 0.0
 
         #approximation: consider biggest overlap
         overlap = get_longest_overlap(a,b,k)
         l = len(overlap)
         if l > 0:
             if a[:l] == overlap:
-                mu += f_b * freqs[len(a[l:])-1][a[l:]]
+                exp += f_b * freqs[len(a[l:])-1][a[l:]]
             elif b[:l] == overlap:
-                mu += f_a * freqs[len(b[l:])-1][b[l:]]
+                exp += f_a * freqs[len(b[l:])-1][b[l:]]
 
-        mu += f_a*f_b
+        exp += f_a*f_b
 
-        denom = math.sqrt( v/total )
-        t_statistic = (v - mu)/denom
+        score = exp/v
 
-        pair_t_statistic[(a,b)] = t_statistic
+        pair_scores[(a,b)] = score
 
-    return pair_t_statistic
+    return pair_scores
 
 
-def save_results(pair_t_statistic, pair_freq, freq, output):
-    ptstat = []
-    for (p,v) in pair_t_statistic.items():
+def save_results(pair_scores, pair_freq, freq, output):
+    pstat = []
+    for (p,v) in pair_scores.items():
         (a,b) = p
         f_a = freq[len(a)-1][a]
         f_b = freq[len(b)-1][b]
@@ -134,11 +132,11 @@ def save_results(pair_t_statistic, pair_freq, freq, output):
         else:
             f_ab = pair_freq[(b,a)]
 
-        ptstat.append( (a,b,f_a,f_b,f_ab,v) )
+        pstat.append( (a,b,f_a,f_b,f_ab,v) )
 
-    out = sorted(ptstat, key=lambda p: p[5], reverse=True)
+    out = sorted(pstat, key=lambda p: p[5], reverse=True)
     f = open(output, 'w')
-    f.write('\t'.join(["seq1", "seq2","f1","f2","f_12","t-statistic"]) + "\n")
+    f.write('\t'.join(["seq1", "seq2","f1","f2","f_12","score"]) + "\n")
     for (a,b,f_a,f_b,f_ab,v) in out: 
         f.write('\t'.join([a, b, str(f_a), str(f_b), str(f_ab), str(v)]) + "\n")
     f.close()
@@ -195,8 +193,8 @@ def main(argv = sys.argv):
 
     pair_freq, total = get_pair_frequencies(seqs,options.kmerlen,options.window)
 
-    pair_t_statistic = get_pair_t_statistic(pair_freq,freqs,options.kmerlen,options.window,total)
-    save_results(pair_t_statistic,pair_freq,freqs,outm)
+    pair_scores = get_pair_scores(pair_freq,freqs,options.kmerlen,options.window,total)
+    save_results(pair_scores,pair_freq,freqs,outm)
 
 if __name__ =='__main__': main()
 
