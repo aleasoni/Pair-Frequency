@@ -110,10 +110,10 @@ def get_pair_scores(pair_freqs,freqs,k,w,total):
                 exp += f_b * freqs[len(a[l:])-1][a[l:]]
             elif b[:l] == overlap:
                 exp += f_a * freqs[len(b[l:])-1][b[l:]]
+        else:
+            exp += f_a*f_b
 
-        exp += f_a*f_b
-
-        score = exp/v
+        score = v/exp
 
         pair_scores[(a,b)] = score
 
